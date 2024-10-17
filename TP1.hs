@@ -36,9 +36,15 @@ pathDistance r (c1:c2:xs) = case distance r c1 c2 of
         Nothing -> Nothing
         Just dt -> Just(d + dt)
 
+route :: RoadMap -> City -> Int
+route r c = length (adjacent r c) 
+
+totalRoute :: RoadMap -> [(City,Int)]
+totalRoute r = [(c ,route r c)| c <- cities r]
 
 rome :: RoadMap -> [City]
-rome = undefined
+rome r = [c|(c,adjCount)<-totalRoute r,adjCount == maxAdj]
+    where maxAdj = maximum [adj| (_,adj)<- totalRoute r]
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
