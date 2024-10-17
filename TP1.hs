@@ -1,6 +1,7 @@
---import qualified Data.List
---import qualified Data.Array
---import qualified Data.Bits
+import qualified Data.List
+import qualified Data.Array
+import qualified Data.Bits
+import Data.List (nub)
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -13,19 +14,28 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 cities :: RoadMap -> [City]
-cities = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+cities x = nub ([o| (o,_,_)<-x] ++ [p|(_,p,_)<-x])-- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
 
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent = undefined
+areAdjacent r c1 c2 = elem (c1,c2) [(x,y)|(x,y,_)<-r] || elem (c2,c1) [(x,y)|(x,y,_)<-r]
 
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance = undefined
+distance r c1 c2 = case [d|(c,b,d)<-r,(c1,c2) == (c,b)|| (c2,c1) == (c,b)] of
+    [] -> Nothing
+    d:_ -> Just d
 
 adjacent :: RoadMap -> City -> [(City,Distance)]
-adjacent = undefined
+adjacent r c = [(c2, d)| (c1, c2,d)<- r, c1==c] ++ [(c1, d)| (c1, c2,d)<- r, c2==c]
 
 pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+pathDistance _ [] = Just 0
+pathDistance _ [_] = Just 0
+pathDistance r (c1:c2:xs) = case distance r c1 c2 of
+    Nothing -> Nothing
+    Just d -> case pathDistance r (c2:xs) of
+        Nothing -> Nothing
+        Just dt -> Just(d + dt)
+
 
 rome :: RoadMap -> [City]
 rome = undefined
