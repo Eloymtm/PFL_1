@@ -33,6 +33,8 @@ Esta implementação do BFS é eficiente para explorar grafos com caminhos de ig
 
 ## Função travelSales
 
+#### Objetivo:
+
 #### Como foi implementada:
 
 - 
