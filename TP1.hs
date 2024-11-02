@@ -1,7 +1,7 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
-import Data.List (nub)
+
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -14,7 +14,8 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 cities :: RoadMap -> [City]
-cities x = nub ([o| (o,_,_)<-x] ++ [p|(_,p,_)<-x])-- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+cities r = Data.List.nub ([o| (o,_,_)<-r] ++ [p|(_,p,_)<-r])
+
 
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent r c1 c2 = elem (c1,c2) [(x,y)|(x,y,_)<-r] || elem (c2,c1) [(x,y)|(x,y,_)<-r]
@@ -34,23 +35,42 @@ pathDistance r (c1:c2:xs) = case distance r c1 c2 of
     Nothing -> Nothing
     Just d -> case pathDistance r (c2:xs) of
         Nothing -> Nothing
-        Just dt -> Just(d + dt)
+        Just dt -> Just (d + dt)
 
 route :: RoadMap -> City -> Int
-route r c = length (adjacent r c) 
+route r c = length (adjacent r c)
 
-totalRoute :: RoadMap -> [(City,Int)]
-totalRoute r = [(c ,route r c)| c <- cities r]
+dfs :: RoadMap -> [City] -> City -> [City]
+dfs r v c
+                    | c `elem` v = v
+                    | otherwise = foldl (\acc adj -> dfs r acc adj) (c : v) adj
+                where
+                    adj = [adj | (adj, _) <- adjacent r c, adj `notElem` v]
 
-rome :: RoadMap -> [City]
-rome r = [c|(c,adjCount)<-totalRoute r,adjCount == maxAdj]
-    where maxAdj = maximum [adj| (_,adj)<- totalRoute r]
+bfs :: RoadMap -> [Path] -> [City] -> City -> [Path]
+bfs r [] _ _ = [] 
+bfs r (h:tl) v e
+      | c == e = [h]  
+      | otherwise = bfs r (tl ++ newPaths) (c : v) e
+      where
+        c = last h
+        adj = getAdjacent c r
+        newPaths = [h ++ [next] | next <- adj, next `notElem` v]
 
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected r =
+                        let c1 = head allCities                 
+                            visitedCities = dfs r [] c1         
+                        in length visitedCities == length allCities    
+                    where
+                        allCities = cities r                      
+
+getAdjacent :: City -> RoadMap -> [City]
+getAdjacent city roads = [if c1 == city then c2 else c1 | (c1, c2, _) <- roads, c1 == city || c2 == city ]
 
 shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath = undefined
+shortestPath r s e = bfs r [[s]] [] e
+    
 
 travelSales :: RoadMap -> Path
 travelSales = undefined
