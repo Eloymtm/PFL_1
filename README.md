@@ -7,8 +7,8 @@
 
 #### Contribuição para o Trabalho:
 
-- Ana Sofia Baptista:
-- Martim Moniz:
+- Ana Sofia Baptista: 50% Funções Implementadas: 2, 3, 6, 8, 9
+- Martim Moniz: 50% Funções Implementadas: 1, 4, 5, 6, 7
 
 ## Função shortestPath
 
@@ -26,15 +26,16 @@ Sempre que o algoritmo alcança a cidade de destino, guarda o caminho como uma s
 
 Esta implementação do BFS é eficiente para explorar grafos com caminhos de igual custo e permite identificar todos os possíveis percursos de menor distância entre duas cidades no grafo, retornando uma lista de soluções para o problema proposto.
 
-#### Como foi implementada:
+#### Justificação das Estruturas de Dados Auxiliares:
+Foram usadas listas para representar os caminhos durante a execução do BFS devido à sua flexibilidade e simplicidade. A lista de caminhos (`[Path]`) é uma estrutura de dados fundamental, pois permite armazenar todos os caminhos explorados de forma eficiente. Em cada iteração, a lista de caminhos é atualizada com as cidades adjacentes, permitindo manter o controlo sobre quais caminhos já foram explorados e quais ainda estão em expansão.
 
-- 
-
-
-## Função travelSales
+## Função travelSales - Programação Dinâmica com Bitmasking
 
 #### Objetivo:
+A função `travelSales` tem como objetivo resolver o problema do Caixeiro Viajante (Traveling Salesman Problem - TSP), que consiste em encontrar a rota de menor custo que visita um conjunto de cidades exatamente uma vez e retorna à cidade de origem. A função utiliza um mapa rodoviário (RoadMap) como entrada e devolve o caminho ótimo a ser percorrido.
 
-#### Como foi implementada:
+#### Algoritmo usado - Programação Dinâmica com BitMasking:
+O algoritmo implementado para resolver o TSP baseia-se em programação dinâmica com bitmasking. A abordagem envolve a construção de uma matriz de adjacência (`AdjMatrix`) que armazena as distâncias entre cada par de cidades. A função tsp é uma função recursiva que utiliza uma tabela de memoização para evitar cálculos redundantes, armazenando resultados previamente computados para combinações de cidades visitadas e posições atuais. O algoritmo explora todos os caminhos possíveis e seleciona o que tem a menor distância total, garantindo assim uma solução eficiente para o problema, mesmo com um número elevado de cidades.
 
-- 
+#### Justificação das Estruturas de Dados Auxiliares:
+A escolha das estruturas de dados auxiliares na função `travelSales` é fundamental para garantir a eficiência e a clareza do algoritmo. A matriz de adjacência (`AdjMatrix`) permite o armazenamento eficiente das distâncias entre as cidades, facilitando consultas rápidas sobre os custos associados a cada par de cidades. A tabela de memoização, é crucial para otimizar o algoritmo, armazenando resultados já calculados para combinações de cidades visitadas e a posição atual, evitando a recomputação. A técnica de bitmasking é utilizada para representar o estado das cidades, permitindo uma manipulação eficiente dos conjuntos visitados e proporcionando uma forma compacta de controlar quais foram as cidades visitadas até ao momento.
