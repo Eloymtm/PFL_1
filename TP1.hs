@@ -90,8 +90,6 @@ buildAdjMatrix cities r =
     bounds = ((0, 0), (numCities - 1, numCities - 1))
 
 
--- Finds the distance between cities by their indices in the cities list
-
 getDistance :: Int -> Int -> [City] -> RoadMap -> Maybe Distance
 getDistance i j cities r =
     let cityPairs = [((c1, c2), d) | (c1, c2, d) <- r] ++ [((c2, c1), d) | (c1, c2, d) <- r]
@@ -108,12 +106,12 @@ travelSales r
     numCities = length citiesL
     adjMatrix = buildAdjMatrix citiesL r
 
-    -- Memoization table for dynamic programming
+
     buildMemoTable = Data.Array.array ((0, 0), (2 ^ numCities - 1, numCities - 1)) 
       [ ((visitedMask, pos), tsp visitedMask pos) 
       | visitedMask <- [0 .. 2 ^ numCities - 1], pos <- [0 .. numCities - 1]]
 
-    -- Dynamic programming function for Traveling Salesman Problem with bitmasking
+
     tsp :: Int -> Int -> Maybe (Distance, [Int])
     tsp visitedMask pos
       | allCitiesVisited visitedMask = returnToStart
@@ -147,7 +145,6 @@ travelSales r
     comparePaths :: (Distance, [Int]) -> (Distance, [Int]) -> Ordering
     comparePaths (d1, _) (d2, _) = compare d1 d2
 
-    -- Final result from memoization
     bestResult = buildMemoTable Data.Array.! (1, 0)
 
 
