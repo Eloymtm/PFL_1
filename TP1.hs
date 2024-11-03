@@ -18,7 +18,6 @@ type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 cities :: RoadMap -> [City]
 cities r = Data.List.nub ([o| (o,_,_)<-r] ++ [p|(_,p,_)<-r])
 
-
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent r c1 c2 = elem (c1,c2) [(x,y)|(x,y,_)<-r] || elem (c2,c1) [(x,y)|(x,y,_)<-r]
 
@@ -39,8 +38,9 @@ pathDistance r (c1:c2:xs) = case distance r c1 c2 of
         Nothing -> Nothing
         Just dt -> Just (d + dt)
 
-route :: RoadMap -> City -> Int
-route r c = length (adjacent r c)
+rome :: RoadMap -> [City]
+rome r = [c | (c, x) <- citiesDegrees, x == maximum[b | (_, b) <- citiesDegrees]]
+    where citiesDegrees = [(c, fromIntegral (length (adjacent r c))) | c <- cities r]
 
 dfs :: RoadMap -> [City] -> City -> [City]
 dfs r v c
@@ -96,7 +96,6 @@ getDistance :: Int -> Int -> [City] -> RoadMap -> Maybe Distance
 getDistance i j cities r =
     let cityPairs = [((c1, c2), d) | (c1, c2, d) <- r] ++ [((c2, c1), d) | (c1, c2, d) <- r]
     in lookup (cities !! i, cities !! j) cityPairs
-
 
 travelSales :: RoadMap -> Path
 travelSales r
