@@ -14,9 +14,6 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 
-
-type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
-
 cities :: RoadMap -> [City]
 cities r = Data.List.nub ([o| (o,_,_)<-r] ++ [p|(_,p,_)<-r])
 
