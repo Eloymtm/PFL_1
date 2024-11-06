@@ -15,6 +15,8 @@ type RoadMap = [(City,City,Distance)]
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 
 
+type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
+
 cities :: RoadMap -> [City]
 cities r = Data.List.nub ([o| (o,_,_)<-r] ++ [p|(_,p,_)<-r])
 
@@ -68,12 +70,11 @@ filterMinPaths paths r =
               in [path | path <- paths, pathDistance r path == Just minDist]        
 
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected r =
-                        let c1 = head allCities                 
-                            visitedCities = dfs r [] c1         
-                        in length visitedCities == length allCities    
-                    where
-                        allCities = cities r                      
+isStronglyConnected r = allCities (cities r) True
+                where
+                    allCities :: [City] -> Bool -> Bool
+                    allCities [] b = (b == True)
+                    allCities (c1:cs) b = allCities cs (b && (length (dfs r [] c1) == length (cities r)))
 
 getAdjacent :: City -> RoadMap -> [City]
 getAdjacent city roads = [if c1 == city then c2 else c1 | (c1, c2, _) <- roads, c1 == city || c2 == city ]
