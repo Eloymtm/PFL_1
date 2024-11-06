@@ -12,12 +12,13 @@ type Path = [City]
 type Distance = Int
 
 type RoadMap = [(City,City,Distance)]
+type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
+
 
 type AdjMatrix = Data.Array.Array (Int, Int) (Maybe Distance)
 
 cities :: RoadMap -> [City]
 cities r = Data.List.nub ([o| (o,_,_)<-r] ++ [p|(_,p,_)<-r])
-
 
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent r c1 c2 = elem (c1,c2) [(x,y)|(x,y,_)<-r] || elem (c2,c1) [(x,y)|(x,y,_)<-r]
@@ -39,8 +40,9 @@ pathDistance r (c1:c2:xs) = case distance r c1 c2 of
         Nothing -> Nothing
         Just dt -> Just (d + dt)
 
-route :: RoadMap -> City -> Int
-route r c = length (adjacent r c)
+rome :: RoadMap -> [City]
+rome r = [c | (c, x) <- citiesDegrees, x == maximum[b | (_, b) <- citiesDegrees]]
+    where citiesDegrees = [(c, fromIntegral (length (adjacent r c))) | c <- cities r]
 
 dfs :: RoadMap -> [City] -> City -> [City]
 dfs r v c
@@ -51,13 +53,21 @@ dfs r v c
 
 bfs :: RoadMap -> [Path] -> [City] -> City -> [Path]
 bfs r [] _ _ = [] 
-bfs r (h:tl) v e
-      | c == e = [h]  
+bfs r (h:tl) v e 
+      | c == e = h : bfs r tl v e 
       | otherwise = bfs r (tl ++ newPaths) (c : v) e
       where
         c = last h
         adj = getAdjacent c r
         newPaths = [h ++ [next] | next <- adj, next `notElem` v]
+
+filterMinPaths :: [Path] -> RoadMap -> [Path]
+filterMinPaths paths r =
+    let distances = [d | Just d <- map (pathDistance r) paths]
+    in case distances of
+        [] -> []
+        _  -> let minDist = minimum distances
+              in [path | path <- paths, pathDistance r path == Just minDist]        
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected r = allCities (cities r) True
@@ -70,77 +80,74 @@ getAdjacent :: City -> RoadMap -> [City]
 getAdjacent city roads = [if c1 == city then c2 else c1 | (c1, c2, _) <- roads, c1 == city || c2 == city ]
 
 shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath r s e = bfs r [[s]] [] e
+shortestPath r s e = filterMinPaths (bfs r [[s]] [] e) r
+    
 
-cityIndex :: [City] -> City -> Int
-cityIndex allCities city = case Data.List.elemIndex city allCities of
-    Just idx -> idx
-    Nothing  -> error "City not found in list"
-
--- buildAdjMatrix :: [City] -> RoadMap -> AdjMatrix
--- buildAdjMatrix cities r =
---     Data.Array.array bounds [((i, j), getDistance i j cities r) | i <- [0 .. numCities - 1], j <- [0 .. numCities - 1]]
---   where
---     numCities = length cities
---     bounds = ((0, 0), (numCities - 1, numCities - 1))
+buildAdjMatrix :: [City] -> RoadMap -> AdjMatrix
+buildAdjMatrix cities r =
+    Data.Array.array bounds [((i, j), getDistance i j cities r) | i <- [0 .. numCities - 1], j <- [0 .. numCities - 1]]
+  where
+    numCities = length cities
+    bounds = ((0, 0), (numCities - 1, numCities - 1))
 
 
--- getDistance :: Int -> Int -> [City] -> RoadMap -> Maybe Distance
--- getDistance i j cities r =
---     let cityPairs = [((c1, c2), d) | (c1, c2, d) <- r] ++ [((c2, c1), d) | (c1, c2, d) <- r]    
---     in lookup (cities !! i, cities !! j) cityPairs
+getDistance :: Int -> Int -> [City] -> RoadMap -> Maybe Distance
+getDistance i j cities r =
+    let cityPairs = [((c1, c2), d) | (c1, c2, d) <- r] ++ [((c2, c1), d) | (c1, c2, d) <- r]
+    in lookup (cities !! i, cities !! j) cityPairs
 
--- travelSales :: RoadMap -> Path
--- travelSales r
---     | null citiesL = []
---     | otherwise = case bestResult of
---         Nothing -> []
---         Just (_, path) -> map (citiesL !!) (0 : path)
---     where
---         citiesL = cities r
---         numCities = length citiesL
---         adjMatrix = buildAdjMatrix citiesL r
-
-
---         buildMemoTable = Data.Array.array ((0, 0), (2 ^ numCities - 1, numCities - 1)) 
---         [ ((visitedMask, pos), tsp visitedMask pos) 
---             | visitedMask <- [0 .. 2 ^ numCities - 1], pos <- [0 .. numCities - 1]]
+travelSales :: RoadMap -> Path
+travelSales r
+  | null citiesL = []
+  | otherwise = case bestResult of
+      Nothing -> []
+      Just (_, path) -> map (citiesL !!) (0 : path)
+  where
+    citiesL = cities r
+    numCities = length citiesL
+    adjMatrix = buildAdjMatrix citiesL r
 
 
---         tsp :: Int -> Int -> Maybe (Distance, [Int])
---         tsp visitedMask pos
---         | allCitiesVisited visitedMask = returnToStart
---         | otherwise = findMinimum validMoves
---         where
---             allCitiesVisited mask = mask == (1 `Data.Bits.shiftL` numCities) - 1
---             returnToStart = case adjMatrix Data.Array.! (pos, 0) of
---                                 Just distance -> Just (distance, [0])
---                                 Nothing -> Nothing
+    buildMemoTable = Data.Array.array ((0, 0), (2 ^ numCities - 1, numCities - 1)) 
+      [ ((visitedMask, pos), tsp visitedMask pos) 
+      | visitedMask <- [0 .. 2 ^ numCities - 1], pos <- [0 .. numCities - 1]]
 
---             validMoves = [ 
---                 let followingDist = adjMatrix Data.Array.! (pos, next)
---                 in case followingDist of
---                     Just d -> do
---                         (existingDist, existingPath) <- buildMemoTable Data.Array.! 
---                             (visitedMask Data.Bits..|. (1 `Data.Bits.shiftL` next), next)
---                         Just (d + existingDist, next : existingPath)
---                     Nothing -> Nothing
---                 | next <- [0 .. numCities - 1],
---                 next /= pos,
---                 not (Data.Bits.testBit visitedMask next)
---                 ]   
 
---     findMinimum :: [Maybe (Distance, [Int])] -> Maybe (Distance, [Int])
---     findMinimum mvs =
---     let validMvs = [v | Just v <- mvs]
---     in case validMvs of
---         [] -> Nothing
---         _ -> Just $ Data.List.minimumBy comparePaths validMvs        
+    tsp :: Int -> Int -> Maybe (Distance, [Int])
+    tsp visitedMask pos
+      | allCitiesVisited visitedMask = returnToStart
+      | otherwise = findMinimum validMoves
+      where
+        allCitiesVisited mask = mask == (1 `Data.Bits.shiftL` numCities) - 1
+        returnToStart = case adjMatrix Data.Array.! (pos, 0) of
+                            Just distance -> Just (distance, [0])
+                            Nothing -> Nothing
 
---     comparePaths :: (Distance, [Int]) -> (Distance, [Int]) -> Ordering
---     comparePaths (d1, _) (d2, _) = compare d1 d2
+        validMoves = [ 
+            let followingDist = adjMatrix Data.Array.! (pos, next)
+            in case followingDist of
+                Just d -> do
+                    (existingDist, existingPath) <- buildMemoTable Data.Array.! 
+                        (visitedMask Data.Bits..|. (1 `Data.Bits.shiftL` next), next)
+                    Just (d + existingDist, next : existingPath)
+                Nothing -> Nothing
+            | next <- [0 .. numCities - 1],
+            next /= pos,
+            not (Data.Bits.testBit visitedMask next)
+            ]   
 
---     bestResult = buildMemoTable Data.Array.! (1, 0)
+    findMinimum :: [Maybe (Distance, [Int])] -> Maybe (Distance, [Int])
+    findMinimum mvs =
+      let validMvs = [v | Just v <- mvs]
+      in case validMvs of
+          [] -> Nothing
+          _ -> Just $ Data.List.minimumBy comparePaths validMvs        
+
+    comparePaths :: (Distance, [Int]) -> (Distance, [Int]) -> Ordering
+    comparePaths (d1, _) (d2, _) = compare d1 d2
+
+    bestResult = buildMemoTable Data.Array.! (1, 0)
+
 
 tspBruteForce :: RoadMap -> Path
 tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
